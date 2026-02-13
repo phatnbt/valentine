@@ -178,17 +178,26 @@
       overflow:hidden;
     }
 
+    /* ✅ FIX MOBILE: meta mờ + không che chữ, và ẩn khi mở */
     .meta{
       position:absolute;
-      left:22px; top:20px;
+      left:18px; top:14px;
       display:flex;
       flex-direction:column;
       gap:6px;
       pointer-events:none;
-      z-index:2;
+      z-index:1;               /* thấp hơn letter */
+      opacity:.48;             /* làm mờ */
+      filter: blur(.2px);
     }
-    .meta .to{ font-size:13px; color: rgba(255,255,255,.88); letter-spacing:.25px; }
-    .meta .tap{ font-size:12.5px; color: rgba(255,255,255,.68); }
+    .meta .to{ font-size:12.5px; color: rgba(255,255,255,.85); letter-spacing:.2px; }
+    .meta .tap{ font-size:12px; color: rgba(255,255,255,.65); }
+
+    .open .meta{
+      opacity:0;
+      transform: translateY(-6px);
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
 
     .pocket{
       position:absolute;
@@ -278,6 +287,7 @@
       overflow:hidden;
       transition: transform 900ms cubic-bezier(.2,.85,.15,1), opacity 600ms ease;
       will-change: transform, opacity;
+      z-index:5;  /* ✅ luôn nằm trên meta */
     }
 
     .letter:before{
@@ -409,20 +419,6 @@
       flex:0 0 auto;
     }
 
-    .btn{
-      display:none;
-      border:none;
-      cursor:pointer;
-      padding:10px 12px;
-      border-radius:12px;
-      font-weight:900;
-      letter-spacing:.2px;
-      background: linear-gradient(90deg, rgba(255,42,161,.95), rgba(255,255,255,.95));
-      color:#0b0b10;
-      box-shadow: 0 10px 22px rgba(0,0,0,.20);
-      white-space:nowrap;
-    }
-
     /* ===== Scroll Down hint/button ===== */
     .scrollHint{
       position:absolute;
@@ -467,9 +463,7 @@
       70%  { transform: translateY(0); }
       100% { transform: translateY(0); }
     }
-    .scrollHint.nudge .scrollBtn{
-      animation: nudge 700ms ease-in-out 2;
-    }
+    .scrollHint.nudge .scrollBtn{ animation: nudge 700ms ease-in-out 2; }
 
     /* ===== Open state ===== */
     .open .flap{ transform: translateX(-50%) rotateX(-180deg) translateZ(3px); }
@@ -546,9 +540,10 @@
             <button class="scrollBtn" id="scrollBtn" type="button">⬇ <b>Kéo xuống</b></button>
           </div>
 
+          <!-- ✅ Không còn nút bật nhạc -->
           <div class="footer">
-            <span id="musicStatus">🎶 Từng Ngày Yêu Em</span>
-            <button class="btn" id="playBtn">▶ Bật nhạc</button>
+            <span id="musicStatus">🎶 Đang tải nhạc…</span>
+            <span style="opacity:.7">♡</span>
           </div>
         </div>
       </div>
@@ -562,9 +557,8 @@
     // ===== Content =====
     const FULL_TEXT =
 `14/2 Anh có đôi lời gửi đến Bubu.
-Chúc Bubu có 1 ngày Valentine thật nhiều niềm vui và ý nghĩa.
+Chúc Bubu có 1 ngày Valentine thật nhiều niềm vui và ý nghĩa.🌷
 Chúc mình luôn dịu dàng với nhau, hôm nay và cả những ngày sau. 🤍
-Valentine này… chỉ muốn nói: anh thương em nhiều lắm. 🌷
 Và đặc biệt mong rằng ta sẽ luôn bên nhau,
 mong những điều tốt đẹp sẽ tới với đôi ta.
 Yêu em, đơn giản vậy thôi. 🫶`;
@@ -579,7 +573,6 @@ Yêu em, đơn giản vậy thôi. 🫶`;
     const contentEl = document.getElementById("content");
     const scrollHintEl = document.getElementById("scrollHint");
     const scrollBtn = document.getElementById("scrollBtn");
-    const playBtn = document.getElementById("playBtn");
     const musicStatus = document.getElementById("musicStatus");
 
     // ===== Hearts =====
@@ -665,8 +658,9 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       updateScrollHint();
     }
 
-    // ===== YouTube =====
-    let player, ready=false, playing=false, started=false;
+    // ===== YouTube (NO BUTTON) =====
+    let player, ready=false, playing=false;
+    let opened=false;
 
     function loadYouTubeAPI(){
       return new Promise((resolve)=>{
@@ -678,7 +672,7 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       });
     }
 
-    async function initPlayer(){
+    async function initPlayerEarly(){
       await loadYouTubeAPI();
       player = new YT.Player("player", {
         videoId: YT_VIDEO_ID,
@@ -687,47 +681,46 @@ Yêu em, đơn giản vậy thôi. 🫶`;
           onReady: ()=>{
             ready = true;
             try { player.setVolume(75); } catch(e){}
-            tryPlay();
+            musicStatus.textContent = "🎶 Từng Ngày Yêu Em";
           },
           onStateChange: (e)=>{
+            // 1 = playing, 2 = paused
             if(e.data === 1){
               playing = true;
-              playBtn.style.display = "none";
               musicStatus.textContent = "🎶 Nhạc đang phát";
               letterEl.classList.add("musicOn");
             }
             if(e.data === 2){
               playing = false;
-              playBtn.style.display = "inline-block";
-              musicStatus.textContent = "🎶 Bấm để bật nhạc";
               letterEl.classList.remove("musicOn");
+              if(opened){
+                // không có nút, nên gợi ý tap lại nếu bị pause/chặn
+                musicStatus.textContent = "🎶 Chạm vào thư để bật nhạc";
+              }
             }
           }
         }
       });
     }
 
-    function tryPlay(){
-      if(!ready) return;
+    // init sớm để tăng khả năng play thành công trên iPhone
+    initPlayerEarly();
+
+    function tryPlayFromTap(){
+      if(!ready || !player) return;
       try { player.playVideo(); } catch(e){}
+      // nếu bị chặn, giữ gợi ý tap lại
       setTimeout(()=>{
         if(!playing){
-          playBtn.style.display = "inline-block";
-          musicStatus.textContent = "🎶 Bấm để bật nhạc";
-          letterEl.classList.remove("musicOn");
+          musicStatus.textContent = "🎶 Chạm vào thư để bật nhạc";
         }
-      }, 1200);
+      }, 900);
     }
-
-    playBtn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      tryPlay();
-    });
 
     // ===== Open =====
     async function openLetter(evt){
-      if(started) return;
-      started = true;
+      if(opened) return;
+      opened = true;
 
       env.classList.add("open");
 
@@ -737,7 +730,9 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       burstSparkles(x, y, 22);
 
       startHearts(true);
-      initPlayer();
+
+      // bắt đầu nhạc ngay khi mở (không nút)
+      tryPlayFromTap();
 
       setTimeout(()=> typeText(FULL_TEXT, 34), 520);
 
@@ -755,6 +750,12 @@ Yêu em, đơn giản vậy thôi. 🫶`;
     env.addEventListener("click", openLetter);
     env.addEventListener("keydown", (e)=>{
       if(e.key === "Enter" || e.key === " ") openLetter(e);
+    });
+
+    // ✅ Nếu autoplay bị chặn: chạm vào thư sẽ bật nhạc (không có nút)
+    letterEl.addEventListener("click", (e)=>{
+      if(!opened) return;
+      if(!playing) tryPlayFromTap();
     });
 
     // gentle hearts before open
