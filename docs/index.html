@@ -38,7 +38,7 @@
       padding:18px;
     }
 
-    /* ===== Background: aurora + blobs + grain ===== */
+    /* ===== Background ===== */
     .bg{ position:fixed; inset:0; z-index:0; overflow:hidden; }
     .bg::before{
       content:"";
@@ -178,7 +178,7 @@
       overflow:hidden;
     }
 
-    /* ✅ FIX MOBILE: meta mờ + không che chữ, và ẩn khi mở */
+    /* ✅ meta mờ + không che chữ (và ẩn khi mở) */
     .meta{
       position:absolute;
       left:18px; top:14px;
@@ -186,13 +186,12 @@
       flex-direction:column;
       gap:6px;
       pointer-events:none;
-      z-index:1;               /* thấp hơn letter */
-      opacity:.48;             /* làm mờ */
+      z-index:1;
+      opacity:.48;
       filter: blur(.2px);
     }
     .meta .to{ font-size:12.5px; color: rgba(255,255,255,.85); letter-spacing:.2px; }
     .meta .tap{ font-size:12px; color: rgba(255,255,255,.65); }
-
     .open .meta{
       opacity:0;
       transform: translateY(-6px);
@@ -287,7 +286,7 @@
       overflow:hidden;
       transition: transform 900ms cubic-bezier(.2,.85,.15,1), opacity 600ms ease;
       will-change: transform, opacity;
-      z-index:5;  /* ✅ luôn nằm trên meta */
+      z-index:5; /* luôn nằm trên meta */
     }
 
     .letter:before{
@@ -339,7 +338,6 @@
     }
     .date{ font-weight:900; color: rgba(18,10,20,.75); letter-spacing:.5px; }
 
-    /* paper layout: footer fixed, content scroll */
     .paper{
       position:relative;
       z-index:2;
@@ -358,13 +356,6 @@
       padding-right: 8px;
       touch-action: pan-y;
     }
-
-    .content::-webkit-scrollbar{ width: 8px; }
-    .content::-webkit-scrollbar-thumb{
-      background: rgba(18,10,20,.18);
-      border-radius: 999px;
-    }
-    .content::-webkit-scrollbar-track{ background: transparent; }
 
     h1{
       margin:0;
@@ -390,7 +381,7 @@
       transition: text-shadow 600ms ease, filter 600ms ease;
     }
 
-    /* ===== Glow theo nhạc ===== */
+    /* glow theo nhạc */
     .letter.musicOn .msg{ animation: glow 2.1s ease-in-out infinite; }
     @keyframes glow{
       0%,100%{ text-shadow: 0 0 0 rgba(255,42,161,0), 0 0 0 rgba(124,255,251,0); filter:none; }
@@ -419,11 +410,11 @@
       flex:0 0 auto;
     }
 
-    /* ===== Scroll Down hint/button ===== */
+    /* Scroll hint */
     .scrollHint{
       position:absolute;
       right: 14px;
-      bottom: 58px; /* ngay trên footer */
+      bottom: 58px;
       z-index:4;
       opacity:0;
       transform: translateY(8px);
@@ -456,7 +447,6 @@
       font-weight:900;
     }
 
-    /* ===== Nudge animation (nhấp nháy 2 lần) ===== */
     @keyframes nudge {
       0%   { transform: translateY(0); }
       35%  { transform: translateY(-6px); }
@@ -465,7 +455,7 @@
     }
     .scrollHint.nudge .scrollBtn{ animation: nudge 700ms ease-in-out 2; }
 
-    /* ===== Open state ===== */
+    /* open */
     .open .flap{ transform: translateX(-50%) rotateX(-180deg) translateZ(3px); }
     .open .seal{
       opacity: 0;
@@ -488,11 +478,8 @@
       .scrollHint.nudge .scrollBtn{ animation:none !important; }
     }
 
-    /* hidden YouTube */
-    #playerWrap{
-      width:1px; height:1px; overflow:hidden;
-      position:absolute; left:-9999px; top:-9999px;
-    }
+    /* audio hidden */
+    audio{ position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; }
   </style>
 </head>
 
@@ -507,6 +494,11 @@
 
   <div id="hearts"></div>
   <div id="sparkles"></div>
+
+  <!-- ✅ MP3 nhạc nền: nhớ upload file vào docs/assets/tung-ngay-yeu-em.mp3 -->
+  <audio id="bgm" preload="auto" playsinline>
+    <source src="assets/tung-ngay-yeu-em.mp3" type="audio/mpeg" />
+  </audio>
 
   <div class="stage">
     <div class="envelope" id="env" tabindex="0" aria-label="Chạm để mở thư">
@@ -540,9 +532,8 @@
             <button class="scrollBtn" id="scrollBtn" type="button">⬇ <b>Kéo xuống</b></button>
           </div>
 
-          <!-- ✅ Không còn nút bật nhạc -->
           <div class="footer">
-            <span id="musicStatus">🎶 Đang tải nhạc…</span>
+            <span id="musicStatus">🎶 Từng Ngày Yêu Em</span>
             <span style="opacity:.7">♡</span>
           </div>
         </div>
@@ -551,22 +542,15 @@
     </div>
   </div>
 
-  <div id="playerWrap"><div id="player"></div></div>
-
   <script>
-    // ===== Content =====
     const FULL_TEXT =
 `14/2 Anh có đôi lời gửi đến Bubu.
-Chúc Bubu có 1 ngày Valentine thật nhiều niềm vui và ý nghĩa.🌷
-Chúc mình luôn dịu dàng với nhau, hôm nay và cả những ngày sau. 🤍
+Chúc Bubu có 1 ngày Valentine thật nhiều niềm vui và ý nghĩa.🤍
+Valentine này… chỉ muốn nói: anh thương em nhiều lắm. 🌷
 Và đặc biệt mong rằng ta sẽ luôn bên nhau,
-mong những điều tốt đẹp sẽ tới với đôi ta.
-Yêu em, đơn giản vậy thôi. 🫶`;
+mong đôi ta sẽ gặp được nhiều điều may mắn.
+Yêu em. 🫶`;
 
-    // Fixed song: "Từng Ngày Yêu Em / buitruonglinh"
-    const YT_VIDEO_ID = "f-VsoLm4i5c";
-
-    // ===== DOM refs =====
     const env = document.getElementById("env");
     const letterEl = document.getElementById("letter");
     const msgEl = document.getElementById("msg");
@@ -574,11 +558,11 @@ Yêu em, đơn giản vậy thôi. 🫶`;
     const scrollHintEl = document.getElementById("scrollHint");
     const scrollBtn = document.getElementById("scrollBtn");
     const musicStatus = document.getElementById("musicStatus");
+    const bgm = document.getElementById("bgm");
 
     // ===== Hearts =====
     const heartsLayer = document.getElementById("hearts");
     let heartTimer = null;
-
     function spawnHeart(){
       const h = document.createElement("div");
       h.className = "heart";
@@ -590,7 +574,6 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       heartsLayer.appendChild(h);
       setTimeout(()=>h.remove(), dur*1000 + 200);
     }
-
     function startHearts(intense=false){
       if(heartTimer) return;
       const rate = intense ? 240 : 520;
@@ -615,36 +598,30 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       }
     }
 
-    // ===== Scroll hint logic =====
+    // ===== Scroll hint =====
     function updateScrollHint(){
       const canScroll = (contentEl.scrollHeight - contentEl.clientHeight) > 12;
       const nearTop = contentEl.scrollTop < 8;
       const nearBottom = (contentEl.scrollTop + contentEl.clientHeight) >= (contentEl.scrollHeight - 10);
 
-      if(canScroll && nearTop && !nearBottom){
-        scrollHintEl.classList.add("show");
-      } else {
-        scrollHintEl.classList.remove("show");
-      }
+      if(canScroll && nearTop && !nearBottom) scrollHintEl.classList.add("show");
+      else scrollHintEl.classList.remove("show");
     }
-
     contentEl.addEventListener("scroll", updateScrollHint, { passive:true });
     window.addEventListener("resize", ()=>setTimeout(updateScrollHint, 0));
-
     scrollBtn.addEventListener("click", (e)=>{
       e.stopPropagation();
       contentEl.scrollBy({ top: Math.max(220, contentEl.clientHeight * 0.75), behavior: "smooth" });
       setTimeout(updateScrollHint, 250);
     });
 
-    // ===== Typewriter (speed 34) =====
+    // ===== Typewriter =====
     async function typeText(text, speed=34){
       msgEl.textContent = "";
       updateScrollHint();
 
       for(let i=0;i<text.length;i++){
         msgEl.textContent += text[i];
-
         const ch = text[i];
         const extra =
           (ch === "\n") ? 320 :
@@ -654,67 +631,34 @@ Yêu em, đơn giản vậy thôi. 🫶`;
         if(i % 18 === 0) updateScrollHint();
         await new Promise(r=>setTimeout(r, speed + extra));
       }
-
       updateScrollHint();
     }
 
-    // ===== YouTube (NO BUTTON) =====
-    let player, ready=false, playing=false;
-    let opened=false;
+    // ===== MP3 autoplay (iPhone friendly) =====
+    let opened = false;
 
-    function loadYouTubeAPI(){
-      return new Promise((resolve)=>{
-        if(window.YT && window.YT.Player) return resolve();
-        const tag = document.createElement("script");
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-        window.onYouTubeIframeAPIReady = ()=>resolve();
-      });
+    function setMusicUI(isPlaying){
+      if(isPlaying){
+        musicStatus.textContent = "🎶 Nhạc đang phát";
+        letterEl.classList.add("musicOn");
+      }else{
+        letterEl.classList.remove("musicOn");
+        if(opened) musicStatus.textContent = "🎶 Chạm vào thư để bật nhạc";
+      }
     }
 
-    async function initPlayerEarly(){
-      await loadYouTubeAPI();
-      player = new YT.Player("player", {
-        videoId: YT_VIDEO_ID,
-        playerVars: { autoplay: 0, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
-        events: {
-          onReady: ()=>{
-            ready = true;
-            try { player.setVolume(75); } catch(e){}
-            musicStatus.textContent = "🎶 Từng Ngày Yêu Em";
-          },
-          onStateChange: (e)=>{
-            // 1 = playing, 2 = paused
-            if(e.data === 1){
-              playing = true;
-              musicStatus.textContent = "🎶 Nhạc đang phát";
-              letterEl.classList.add("musicOn");
-            }
-            if(e.data === 2){
-              playing = false;
-              letterEl.classList.remove("musicOn");
-              if(opened){
-                // không có nút, nên gợi ý tap lại nếu bị pause/chặn
-                musicStatus.textContent = "🎶 Chạm vào thư để bật nhạc";
-              }
-            }
-          }
-        }
-      });
-    }
+    bgm.addEventListener("play", ()=>setMusicUI(true));
+    bgm.addEventListener("pause", ()=>setMusicUI(false));
+    bgm.addEventListener("ended", ()=>setMusicUI(false));
 
-    // init sớm để tăng khả năng play thành công trên iPhone
-    initPlayerEarly();
-
-    function tryPlayFromTap(){
-      if(!ready || !player) return;
-      try { player.playVideo(); } catch(e){}
-      // nếu bị chặn, giữ gợi ý tap lại
-      setTimeout(()=>{
-        if(!playing){
-          musicStatus.textContent = "🎶 Chạm vào thư để bật nhạc";
-        }
-      }, 900);
+    async function tryPlayBgm(){
+      try{
+        bgm.volume = 0.85;
+        await bgm.play();
+        // nếu play() bị chặn, sẽ rơi vào catch
+      }catch(e){
+        setMusicUI(false);
+      }
     }
 
     // ===== Open =====
@@ -731,12 +675,12 @@ Yêu em, đơn giản vậy thôi. 🫶`;
 
       startHearts(true);
 
-      // bắt đầu nhạc ngay khi mở (không nút)
-      tryPlayFromTap();
+      // Nhạc bắt đầu NGAY khi mở (tap này là user-gesture)
+      tryPlayBgm();
 
       setTimeout(()=> typeText(FULL_TEXT, 34), 520);
 
-      // nhấp nháy gợi ý kéo xuống 2 lần nếu nội dung dài
+      // nudge kéo xuống nếu dài
       setTimeout(()=>{
         updateScrollHint();
         const canScroll = (contentEl.scrollHeight - contentEl.clientHeight) > 12;
@@ -752,13 +696,12 @@ Yêu em, đơn giản vậy thôi. 🫶`;
       if(e.key === "Enter" || e.key === " ") openLetter(e);
     });
 
-    // ✅ Nếu autoplay bị chặn: chạm vào thư sẽ bật nhạc (không có nút)
-    letterEl.addEventListener("click", (e)=>{
-      if(!opened) return;
-      if(!playing) tryPlayFromTap();
+    // Nếu iOS chặn autoplay (hiếm khi, tùy app), chạm vào thư sẽ bật lại
+    letterEl.addEventListener("click", ()=>{
+      if(opened && bgm.paused) tryPlayBgm();
     });
 
-    // gentle hearts before open
+    // hearts nhẹ trước khi mở
     startHearts(false);
   </script>
 </body>
