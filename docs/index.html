@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>💌 Gửi Bubu</title>
+  <meta name="theme-color" content="#0b0b10" />
+  <style>
+    :root{
+      --bg:#070711;
+      --pink:#ff2aa1;
+      --rose:#ff7fc8;
+      --ink:#120a14;
+      --paper:#fff7fb;
+      --paper2:#fff1f7;
+      --shadow: 0 24px 90px rgba(0,0,0,.60);
+      --softShadow: 0 16px 45px rgba(0,0,0,.35);
+      --radius:24px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      height:100vh;
+      overflow:hidden;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      color:#fff;
+      background:
+        radial-gradient(900px 700px at 18% 15%, rgba(255,42,161,.22), transparent 60%),
+        radial-gradient(900px 700px at 78% 22%, rgba(255,255,255,.06), transparent 62%),
+        radial-gradient(900px 700px at 50% 90%, rgba(255,127,200,.10), transparent 60%),
+        var(--bg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+
+    /* subtle grain */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,.06), transparent 35%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,.04), transparent 35%),
+        radial-gradient(circle at 50% 80%, rgba(255,255,255,.03), transparent 35%),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 3px);
+      opacity:.35;
+      pointer-events:none;
+      mix-blend-mode: overlay;
+    }
+
+    /* hearts */
+    #hearts{ position:fixed; inset:0; pointer-events:none; z-index:2;}
+    .heart{
+      position:absolute; bottom:-24px;
+      font-size:18px; opacity:.92;
+      filter: drop-shadow(0 0 10px rgba(255,42,161,.45));
+      animation: floatUp linear forwards;
+      user-select:none;
+    }
+    @keyframes floatUp{
+      from{ transform:translateY(0) scale(.95); opacity:0; }
+      10%{ opacity:.95; }
+      to{ transform:translateY(-110vh) scale(1.35); opacity:0; }
+    }
+
+    /* stage */
+    .stage{
+      width:min(560px, 94vw);
+      height:min(420px, 72vw);
+      max-height:560px;
+      position:relative;
+      perspective: 1200px;
+      z-index:3;
+    }
+
+    /* envelope wrapper */
+    .envelope{
+      position:absolute; inset:0;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      backdrop-filter: blur(12px);
+      cursor:pointer;
+      user-select:none;
+      transform: translateZ(0);
+      overflow: visible;
+    }
+
+    /* inner bed */
+    .bed{
+      position:absolute; inset:16px;
+      border-radius: calc(var(--radius) - 8px);
+      background:
+        radial-gradient(520px 240px at 22% 20%, rgba(255,42,161,.14), transparent 62%),
+        radial-gradient(520px 240px at 82% 15%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.22));
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+
+    /* envelope pocket front */
+    .pocket{
+      position:absolute;
+      left:50%;
+      bottom:18px;
+      width: 88%;
+      height: 62%;
+      transform: translateX(-50%);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(0,0,0,.12));
+      border: 1px solid rgba(255,255,255,.13);
+      box-shadow: 0 16px 40px rgba(0,0,0,.25);
+      clip-path: polygon(0% 0%, 50% 45%, 100% 0%, 100% 100%, 0% 100%);
+      pointer-events:none;
+    }
+
+    /* pocket inner shadow */
+    .pocket:before{
+      content:"";
+      position:absolute; inset:0;
+      background: radial-gradient(520px 220px at 50% 0%, rgba(0,0,0,.25), transparent 70%);
+      opacity:.65;
+    }
+
+    /* envelope flap */
+    .flap{
+      position:absolute;
+      left:50%;
+      top:26px;
+      width: 88%;
+      height: 58%;
+      transform: translateX(-50%) rotateX(0deg);
+      transform-origin: 50% 100%;
+      transition: transform 900ms cubic-bezier(.2,.85,.15,1);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255,42,161,.18), rgba(255,255,255,.05));
+      border: 1px solid rgba(255,255,255,.13);
+      clip-path: polygon(0% 100%, 50% 0%, 100% 100%, 100% 100%, 0% 100%);
+      backface-visibility:hidden;
+      pointer-events:none;
+      box-shadow: 0 14px 35px rgba(0,0,0,.20);
+    }
+
+    /* label + hint */
+    .meta{
+      position:absolute;
+      left:24px; top:22px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      pointer-events:none;
+    }
+    .meta .to{
+      font-size:13px;
+      color: rgba(255,255,255,.88);
+      letter-spacing:.25px;
+    }
+    .meta .tap{
+      font-size:12.5px;
+      color: rgba(255,255,255,.68);
+    }
+
+    /* wax seal */
+    .seal{
+      position:absolute;
+      left:50%;
+      top:56%;
+      transform: translate(-50%,-50%) translateZ(2px);
+      width:62px; height:62px;
+      border-radius: 999px;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.40), rgba(255,255,255,.10) 35%, rgba(0,0,0,.10) 85%),
+        linear-gradient(180deg, rgba(255,42,161,.55), rgba(255,42,161,.28));
+      border: 1px solid rgba(255,255,255,.18);
+      box-shadow: 0 18px 40px rgba(0,0,0,.35);
+      display:flex; align-items:center; justify-content:center;
+      transition: opacity 420ms ease, transform 420ms ease;
+      pointer-events:none;
+    }
+    .seal:before{
+      content:"";
+      position:absolute; inset:8px;
+      border-radius:999px;
+      border: 1px dashed rgba(255,255,255,.25);
+      opacity:.65;
+    }
+    .seal span{
+      font-size:22px;
+      filter: drop-shadow(0 0 14px rgba(255,255,255,.22));
+    }
+
+    /* letter */
+    .letter{
+      position:absolute;
+      left:50%;
+      bottom:22px;
+      width: 88%;
+      height: 80%;
+      transform: translate(-50%, 60%);
+      opacity: 0;
+      border-radius: 18px;
+      background: linear-gradient(180deg, var(--paper), var(--paper2));
+      border: 1px solid rgba(18,10,20,.12);
+      box-shadow: var(--softShadow);
+      overflow:hidden;
+      transition: transform 900ms cubic-bezier(.2,.85,.15,1), opacity 600ms ease;
+      will-change: transform, opacity;
+    }
+
+    /* paper texture + lines */
+    .letter:before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,42,161,.10), transparent 55%),
+        radial-gradient(circle at 80% 10%, rgba(0,0,0,.05), transparent 55%),
+        repeating-linear-gradient(0deg, rgba(18,10,20,.04) 0 1px, transparent 1px 26px);
+      opacity:.55;
+      pointer-events:none;
+      mix-blend-mode:multiply;
+    }
+
+    .topbar{
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 16px;
+      border-bottom:1px solid rgba(18,10,20,.10);
+      position:relative;
+      z-index:1;
+      color: rgba(18,10,20,.65);
+      font-size:12.5px;
+    }
+    .stamp{
+      display:flex; align-items:center; gap:8px;
+      font-weight:700;
+    }
+    .stamp i{
+      width:10px; height:10px; border-radius:50%;
+      background: var(--pink);
+      box-shadow: 0 0 14px rgba(255,42,161,.35);
+      display:inline-block;
+    }
+    .date{
+      font-weight:800;
+      color: rgba(18,10,20,.75);
+      letter-spacing:.4px;
+    }
+
+    .paper{
+      position:relative;
+      z-index:1;
+      padding: 16px 18px 16px;
+      height: calc(100% - 56px);
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:12px;
+    }
+    h1{
+      margin:0;
+      font-size: clamp(20px, 3.6vw, 30px);
+      line-height:1.15;
+      color: rgba(18,10,20,.92);
+      letter-spacing:.2px;
+    }
+    .toName{
+      background: linear-gradient(90deg, var(--pink), var(--rose));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      font-weight:900;
+    }
+    .msg{
+      margin: 10px 0 0;
+      font-size: clamp(14.5px, 2.5vw, 17.5px);
+      line-height: 1.65;
+      color: rgba(18,10,20,.88);
+      white-space: pre-line;
+    }
+    .footer{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding-top:10px;
+      border-top:1px dashed rgba(18,10,20,.18);
+      color: rgba(18,10,20,.62);
+      font-size:12.5px;
+    }
+    .btn{
+      display:none;
+      border:none;
+      cursor:pointer;
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:900;
+      letter-spacing:.2px;
+      background: linear-gradient(90deg, rgba(255,42,161,.95), rgba(255,255,255,.95));
+      color:#0b0b10;
+      box-shadow: 0 10px 22px rgba(0,0,0,.20);
+      white-space:nowrap;
+    }
+
+    /* open state */
+    .open .flap{
+      transform: translateX(-50%) rotateX(-180deg);
+    }
+    .open .seal{
+      opacity: 0;
+      transform: translate(-50%,-50%) scale(.92);
+    }
+    .open .letter{
+      opacity: 1;
+      transform: translate(-50%, 0%) scale(1.02);
+      animation: pop 900ms cubic-bezier(.2,.85,.15,1) both;
+    }
+    @keyframes pop{
+      0%{ transform: translate(-50%, 18%) scale(.98); }
+      55%{ transform: translate(-50%, -2%) scale(1.03); }
+      100%{ transform: translate(-50%, 0%) scale(1.02); }
+    }
+
+    /* focus ring for accessibility */
+    .envelope:focus{
+      outline:none;
+      box-shadow: var(--shadow), 0 0 0 3px rgba(255,42,161,.35);
+    }
+
+    /* hidden YouTube */
+    #playerWrap{
+      width:1px; height:1px; overflow:hidden;
+      position:absolute; left:-9999px; top:-9999px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="hearts"></div>
+
+  <div class="stage">
+    <div class="envelope" id="env" tabindex="0" aria-label="Chạm để mở thư">
+      <div class="bed"></div>
+
+      <div class="meta">
+        <div class="to">💌 To: Bubu</div>
+        <div class="tap">Chạm để mở thư</div>
+      </div>
+
+      <div class="pocket"></div>
+      <div class="flap"></div>
+
+      <div class="seal"><span>💗</span></div>
+
+      <div class="letter">
+        <div class="topbar">
+          <div class="stamp"><i></i> Valentine Letter</div>
+          <div class="date">14/2</div>
+        </div>
+
+        <div class="paper">
+          <div>
+            <h1>Gửi <span class="toName">Bubu</span> 💘</h1>
+            <div class="msg">14/2 anh có đôi lời gửi đến pé.
+chúc bubu có 1 ngày Valentine thật nhiều niềm zui và ý nghĩa
+và đặc biệt mong rằng ta sẽ luôn bên nhau,
+mong những điều tốt đẹp sẽ tới với đôi ta.</div>
+          </div>
+
+          <div class="footer">
+            <span id="musicStatus">🎶 Từng Ngày Yêu Em</span>
+            <button class="btn" id="playBtn">▶ Bật nhạc</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="playerWrap"><div id="player"></div></div>
+
+  <script>
+    // Fixed song: "Từng Ngày Yêu Em / buitruonglinh"
+    const YT_VIDEO_ID = "f-VsoLm4i5c";
+
+    // hearts
+    const heartsLayer = document.getElementById("hearts");
+    let heartTimer = null;
+    function spawnHeart(){
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.textContent = Math.random() > 0.5 ? "❤" : "♡";
+      h.style.left = (Math.random()*100) + "vw";
+      const dur = (Math.random()*4 + 6);
+      h.style.animationDuration = dur + "s";
+      h.style.fontSize = (Math.random()*18 + 12) + "px";
+      heartsLayer.appendChild(h);
+      setTimeout(()=>h.remove(), dur*1000 + 200);
+    }
+    function startHearts(){
+      if(heartTimer) return;
+      heartTimer = setInterval(spawnHeart, 420);
+      for(let i=0;i<12;i++) setTimeout(spawnHeart, i*120);
+    }
+
+    // YouTube
+    let player, ready=false, playing=false, started=false;
+    const env = document.getElementById("env");
+    const playBtn = document.getElementById("playBtn");
+    const musicStatus = document.getElementById("musicStatus");
+
+    function loadYouTubeAPI(){
+      return new Promise((resolve)=>{
+        if(window.YT && window.YT.Player) return resolve();
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+        window.onYouTubeIframeAPIReady = ()=>resolve();
+      });
+    }
+
+    async function initPlayer(){
+      await loadYouTubeAPI();
+      player = new YT.Player("player", {
+        videoId: YT_VIDEO_ID,
+        playerVars: { autoplay: 0, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: ()=>{
+            ready = true;
+            try { player.setVolume(75); } catch(e){}
+            tryPlay();
+          },
+          onStateChange: (e)=>{
+            if(e.data === 1){
+              playing = true;
+              playBtn.style.display = "none";
+              musicStatus.textContent = "🎶 Nhạc đang phát";
+            }
+            if(e.data === 2){
+              playing = false;
+              playBtn.style.display = "inline-block";
+              musicStatus.textContent = "🎶 Bấm để bật nhạc";
+            }
+          }
+        }
+      });
+    }
+
+    function tryPlay(){
+      if(!ready) return;
+      try { player.playVideo(); } catch(e){}
+      setTimeout(()=>{
+        if(!playing){
+          playBtn.style.display = "inline-block";
+          musicStatus.textContent = "🎶 Bấm để bật nhạc";
+        }
+      }, 1200);
+    }
+
+    playBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      tryPlay();
+    });
+
+    function openLetter(){
+      if(started) return;
+      started = true;
+      env.classList.add("open");
+      startHearts();
+      initPlayer(); // user gesture -> best chance autoplay
+    }
+
+    env.addEventListener("click", openLetter);
+    env.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " ") openLetter();
+    });
+  </script>
+</body>
+</html>
